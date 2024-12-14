@@ -1,13 +1,13 @@
 #include "fps.h"
 
-uint8_t  fps_switch                 = 1;
-uint8_t  deku_stick_timer_switch    = 0;
-uint8_t  nayrus_love_timer_switch   = 0;
-uint8_t  damage_frames_timer_switch = 0;
-uint16_t last_time                  = 0;
-uint16_t started_timer              = 0;
+bool fps_switch                 = true;
+bool deku_stick_timer_switch    = false;
+bool nayrus_love_timer_switch   = false;
+bool damage_frames_timer_switch = false;
+u16  last_time                  = 0;
+u16  started_timer              = 0;
 
-extern uint16_t play_sfx;
+extern u16 play_sfx;
 
 void handle_fps() {
     if (!OPTION_ACTIVE(1, SAVE_30_FPS, CFG_DEFAULT_30_FPS) || z64_file.game_mode != 0)
@@ -20,7 +20,7 @@ void handle_fps() {
         else play_sfx = 0x4813;
     }
     
-    if (z64_game.pause_ctxt.state != 0)
+    if (z64_game.pause_ctxt.state != PAUSE_STATE_OFF)
         return;
     
     if (!fps_switch)
@@ -38,21 +38,21 @@ void handle_fps() {
             deku_stick_timer_switch = 1;
         }
         else if (deku_stick_timer == 0 && deku_stick_timer_switch)
-            deku_stick_timer_switch = 0;
+            deku_stick_timer_switch = false;
         
         if (z64_file.nayrus_love_timer == 601 && !nayrus_love_timer_switch) {
             z64_file.nayrus_love_timer -= 600;
-            nayrus_love_timer_switch = 1;
+            nayrus_love_timer_switch = true;
         }
         else if ( (z64_file.nayrus_love_timer == 0 || z64_file.nayrus_love_timer > 601) && nayrus_love_timer_switch)
-            nayrus_love_timer_switch = 0;
+            nayrus_love_timer_switch = false;
         
         if (z64_damage_frames == 1 && !damage_frames_timer_switch) {
             z64_damage_frames += 10;
-            damage_frames_timer_switch = 1;
+            damage_frames_timer_switch = true;
         }
         else if (z64_damage_frames == 0 && damage_frames_timer_switch)
-            damage_frames_timer_switch = 0;
+            damage_frames_timer_switch = false;
         
         if (link_animation == 0x2968 || link_animation == 0x2970 || link_animation == 0x2A80 || link_animation == 0x2A90)
             link_animation_parameter = 0x3F4CCCCD;
@@ -91,11 +91,11 @@ void reset_fps_values() {
         
     // Timers
     if (timer1_1 == 0x1E) {
-        timer1_1 = timer1_2 = timer1_3 = timer1_4 = 0x14;
+        timer1_1 = timer1_2 = timer1_3 = timer1_4                       = 0x14;
         timer2_1 = timer2_2 = timer2_3 = timer2_4 = timer2_5 = timer2_6 = 0x14;
-        timer2_7 = 0x28;
-        timer3_1 = timer3_2 = timer3_3 = 0x14;
-        timer4_2 = timer4_3 = timer4_4 = timer4_5 = 0x14;
-        timer4_1 = timer4_6 = timer4_7 = 0x28;
+        timer2_7                                                        = 0x28;
+        timer3_1 = timer3_2 = timer3_3                                  = 0x14;
+        timer4_2 = timer4_3 = timer4_4 = timer4_5                       = 0x14;
+        timer4_1 = timer4_6 = timer4_7                                  = 0x28;
     }
 }

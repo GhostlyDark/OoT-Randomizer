@@ -2,46 +2,48 @@
 #define ACTOR_H
 
 #include "z64.h"
-#include "z64_extended.h"
 
-typedef void(*actor_after_spawn_func)(z64_actor_t* actor, uint8_t overridden);
+#include <math.h>
 
-void get_health(z64_actor_t* actor);
-void draw_health(z64_disp_buf_t *db);
-void restore_spawner_backup(z64_game_t *game);
-void remove_enemy_spawner();
-void remove_falling_rocks_spawner();
-void set_actor_backup(z64_actor_t *actor);
-//void set_redead_freeze();
-void elite_enemies();
-z64_actor_t *replace_enemy_type(z64_actor_t *spawned);
+#include "gfx.h"
 
-z64_actor_t *Actor_SpawnEntry_Hack(void *actorCtx, ActorEntry *actorEntry, z64_game_t *globalCtx);
-//void Actor_SetWorldToHome_End(z64_actor_t *actor);
-//void Actor_After_UpdateAll_Hack(z64_actor_t *actor, z64_game_t *game);
+typedef void(*actor_after_spawn_func)(z64_actor_t* actor, u8 overridden);
+
+void         get_health(            z64_actor_t*    actor);
+u8           set_health(            z64_actor_t*    actor);
+void         draw_health(           z64_disp_buf_t* db);
+void         restore_spawner_backup(z64_game_t*     game);
+void         remove_enemy_spawner();
+void         remove_falling_rocks_spawner();
+void         set_actor_backup(      z64_actor_t*    actor);
+void         process_enemy_health();
+z64_actor_t* replace_enemy_type   ( z64_actor_t*    spawned);
+z64_actor_t* Actor_SpawnEntry_Hack( void*           actorCtx, ActorEntry* actorEntry, z64_game_t* globalCtx);
 
 /* DRAM addresses & data for enemies */
-#define HP_KING_DODONGO             (*(uint8_t*)            0x801ECB75)
-#define HP_BARINADE                 (*(uint8_t*)            0x801F9590)
-#define HP_PHANTOM_GANON            (*(uint8_t*)            0x801E71FF)
-#define HP_MORPHA                   (*(uint8_t*)            0x801F253F)
-#define HP_TWINROVA_BLUE            (*(uint8_t*)            0x801F88EF)
-#define HP_TWINROVA_RED             (*(uint8_t*)            0x801F88EF)
-#define HP_TWINROVA                 (*(uint8_t*)            0x801F7F8F)
-#define HP_GANONDORF                (*(uint8_t*)            0x8020B5CF)
-#define HP_GANON                    (*(uint8_t*)            0x801FA2DF)
+#define HP_KING_DODONGO             (*(u8*)            0x801ECB75)
+#define HP_BARINADE                 (*(u8*)            0x801F9590)
+#define HP_PHANTOM_GANON            (*(u8*)            0x801E71FF)
+#define HP_MORPHA                   (*(u8*)            0x801F253F)
+#define HP_TWINROVA_BLUE            (*(u8*)            0x801F88EF)
+#define HP_TWINROVA_RED             (*(u8*)            0x801F88EF)
+#define HP_TWINROVA                 (*(u8*)            0x801F7F8F)
+#define HP_GANONDORF                (*(u8*)            0x8020B5CF)
+#define HP_GANON                    (*(u8*)            0x801FA2DF)
+
+#define MaxHealth(actor) ((u8*)(&actor->unk_01_[0]))
 
 typedef struct {
-    int8_t scene;
-    uint16_t id;
-    int16_t x;
-    int16_t y;
-    int16_t z;
-    uint16_t xr;
-    uint16_t yr;
-    uint16_t zr;
-    uint16_t var;
-} actor_backup_t;
+    s8  scene;
+    u16 id;
+    s16 x;
+    s16 y;
+    s16 z;
+    u16 xr;
+    u16 yr;
+    u16 zr;
+    u16 var;
+} actor_backup;
 
 typedef enum {
     EN_TEST        = 0x0002,

@@ -54,11 +54,8 @@ void update_hud_colors() {
   (*normal_no_dd).g1 = heartColor.g;
   (*normal_no_dd).b1 = heartColor.b;
 
-  if (heartColor.r == defaultHeart.r &&
-      heartColor.g == defaultHeart.g &&
-      heartColor.b == defaultHeart.b) {
-    heartColor = defaultDDHeart;
-  }
+  if (heartColor.r == defaultHeart.r && heartColor.g == defaultHeart.g && heartColor.b == defaultHeart.b)
+      heartColor = defaultDDHeart;
 
   (*beating_dd) = heartColor;
   (*normal_dd)  = heartColor;

@@ -36,11 +36,19 @@ extern sprite_t subscreen_sprite;
 extern sprite_t title_sprite;
 extern sprite_t title_text_sprite;
 extern sprite_t name_panel_sprite;
+extern sprite_t magic_meter_end;
+extern sprite_t magic_meter_mid;
+extern sprite_t magic_meter_fill;
 
 void gfx_init();
 
-void sprite_load(z64_disp_buf_t *db, sprite_t *sprite, int start_tile, int tile_count);
-void sprite_draw(z64_disp_buf_t *db, sprite_t *sprite, int tile_index, int left, int top, int width, int height);
-void sprite_load_and_draw(z64_disp_buf_t *db, sprite_t *sprite, int index, int16_t x, int16_t y, uint8_t w, uint8_t h);
+void sprite_load(                  z64_disp_buf_t *db, sprite_t *sprite, int start_tile, int     tile_count);
+void sprite_draw(                  z64_disp_buf_t *db, sprite_t *sprite, int tile_index, int     left, int     top, int     width, int     height);
+void sprite_load_and_draw(         z64_disp_buf_t *db, sprite_t *sprite, int index,      int16_t x,    int16_t y,   uint8_t w,     uint8_t h);
+void sprite_texture(               z64_disp_buf_t* db, sprite_t* sprite, int tile_index, int16_t left, int16_t top, int16_t width, int16_t height);
+void sprite_texture_4b(            z64_disp_buf_t* db, sprite_t* sprite, int tile_index, int16_t left, int16_t top, int16_t width, int16_t height);
+
+void display_buffer_init();
+void display_buffer_reset();
 
 #endif

@@ -2,7 +2,7 @@
 
 #include "color.h"
 #include "hud_colors.h"
-#include "triforce.h"
+//#include "triforce.h"
 
 #define ICON_SIZE    0x0C
 #define MUSIC_WIDTH  0x06

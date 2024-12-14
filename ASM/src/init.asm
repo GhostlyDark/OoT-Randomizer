@@ -19,7 +19,7 @@ init:
 
 
 Static_ctxt_Init:
-    li      t0, RANDO_CONTEXT
+    li      t0, REDUX_CONTEXT
     sw      t0, 0x15D4(v0)
     jr      ra    
     ; Displaced code

@@ -6,137 +6,136 @@ extern colorRGB8_t CFG_TUNIC_HERO;
 extern colorRGB8_t CFG_TUNIC_NONE;
 extern colorRGB8_t CFG_TUNIC_SHADOW;
 
-extern uint8_t  compare_frames;
-extern uint16_t play_sfx;
+extern u8  compare_frames;
+extern u16 play_sfx;
+extern u16 dpad_alpha;
 
-uint8_t hud_hearts_hide    = 1;
-uint8_t hud_counter        = 0;
-uint8_t block_r            = 0;
-uint8_t block_z            = 0;
-uint8_t pressed_r          = 0;
-uint8_t pressed_z          = 0;
-uint8_t pressed_stick      = 0;
-uint8_t pressed_dpad       = 0;
-uint8_t timer_holding_l    = 0;
+static u16* button_alphas[] = { &z64_game.alpha_channels.b_button, &z64_game.alpha_channels.cl_button, &z64_game.alpha_channels.cd_button, &z64_game.alpha_channels.cr_button, &z64_game.alpha_channels.a_button };
 
-uint8_t rupee_drain_frames = 0;
-uint8_t rupee_drain_secs   = 0;
-uint8_t restore_frames     = 0;
-uint8_t restore_secs       = 0;
-uint8_t magic_frames       = 0;
-uint8_t magic_secs         = 0;
-uint8_t restore_health     = 0;
+u8 block_r            = false;
+u8 block_z            = false;
+u8 pressed_r          = false;
+u8 pressed_z          = false;
+u8 pressed_stick      = false;
+u8 pressed_dpad       = false;
+u8 timer_holding_l    = 0;
 
-uint8_t checked_tunics     = 0;
+u8 rupee_drain_frames = 0;
+u8 rupee_drain_secs   = 0;
+u8 restore_frames     = 0;
+u8 restore_secs       = 0;
+u8 magic_frames       = 0;
+u8 magic_secs         = 0;
+u8 restore_health     = 0;
+
+s8 last_interface     = -1;
+
+u8 checked_tunics     = 0;
 colorRGB8_t tunic_kokiri;
 colorRGB8_t tunic_goron;
 colorRGB8_t tunic_zora;
 
 void handle_l_button() {
-    if (z64_game.pause_ctxt.state != 0)
+    if (z64_game.pause_ctxt.state != PAUSE_STATE_OFF)
         return;
     if (!OPTION_ACTIVE(1, SAVE_30_FPS, CFG_DEFAULT_30_FPS) && !OPTION_VALUE(1, 2, SAVE_DPAD, CFG_DEFAULT_DPAD) && !OPTION_ACTIVE(2, SAVE_EXTRA_ABILITIES, CFG_DEFAULT_EXTRA_ABILITIES))
         return;
     
-    uint8_t toggle = 0;
-    
     if (OPTION_VALUE(1, 2, SAVE_DPAD, CFG_DEFAULT_DPAD)) {
         if (z64_game.common.input[0].raw.pad.r)
-            pressed_r = 1;
+            pressed_r = true;
         if (z64_game.common.input[0].raw.pad.du || z64_game.common.input[0].raw.pad.dr || z64_game.common.input[0].raw.pad.dd || z64_game.common.input[0].raw.pad.dl)
-            pressed_dpad = 1;
+            pressed_dpad = true;
     }
-    else pressed_r = pressed_dpad = 0;
+    else pressed_r = pressed_dpad = false;
     if (OPTION_ACTIVE(1, SAVE_30_FPS, CFG_DEFAULT_30_FPS)) {
         if (z64_game.common.input[0].raw.pad.z)
-            pressed_z = 1;
+            pressed_z = true;
     }
-    else pressed_z = 0;
+    else pressed_z = false;
     if (OPTION_ACTIVE(2, SAVE_EXTRA_ABILITIES, CFG_DEFAULT_EXTRA_ABILITIES)) {
         if (z64_game.common.input[0].raw.x != 0 || z64_game.common.input[0].raw.y != 0)
-            pressed_stick = 1;
+            pressed_stick = true;
     }
-    else pressed_stick = 0;
+    else pressed_stick = false;
     
     if (z64_game.common.input[0].pad_released.l)
         if (!pressed_r && !pressed_z && !pressed_stick && !pressed_dpad && timer_holding_l != 30 / fps_limit)
             toggle_minimap();
     if (!z64_game.common.input[0].raw.pad.l)
-        pressed_r = pressed_z = pressed_stick = pressed_dpad = 0;
+        pressed_r = pressed_z = pressed_stick = pressed_dpad = false;
     
     if (z64_game.common.input[0].pad_pressed.l) {
         if (OPTION_VALUE(1, 2, SAVE_DPAD, CFG_DEFAULT_DPAD))
             if (!z64_game.common.input[0].raw.pad.r)
-                block_r = 1;
+                block_r = true;
         if (OPTION_ACTIVE(1, SAVE_30_FPS, CFG_DEFAULT_30_FPS))
             if (!z64_game.common.input[0].raw.pad.z)
-                block_z = 1;
+                block_z = true;
     }
     
     if (z64_game.common.input[0].raw.pad.l && timer_holding_l < 30 / fps_limit)
         timer_holding_l++;
     if (!z64_game.common.input[0].raw.pad.l)
-        block_r = block_z = timer_holding_l = 0;
+        block_r = block_z = timer_holding_l = false;
     
     if (block_r)
         z64_game.common.input[0].raw.pad.r = z64_game.common.input[0].pad_pressed.r = 0;
     if (block_z)
         z64_game.common.input[0].raw.pad.z = z64_game.common.input[0].pad_pressed.z = 0;
     
-    z64_game.common.input[0].pad_pressed.l = 0;
+    z64_game.common.input[0].pad_pressed.l = false;
 }
 
 void handle_l_button_paused() {
-    if (z64_game.pause_ctxt.state != 6 || CFG_OPTIONS_MENU == 0)
+    if (z64_game.pause_ctxt.state != PAUSE_STATE_MAIN || CFG_OPTIONS_MENU == 0)
         return;
-    
-    uint8_t toggle = 0;
     
     if (OPTION_VALUE(1, 2, SAVE_DPAD, CFG_DEFAULT_DPAD)) {
         if (z64_game.common.input[0].raw.pad.r)
-            pressed_r = 1;
+            pressed_r = true;
     }
     else pressed_r = 0;
     if (OPTION_ACTIVE(1, SAVE_30_FPS, CFG_DEFAULT_30_FPS)) {
         if (z64_game.common.input[0].raw.pad.z)
-            pressed_z = 1;
+            pressed_z = true;
     }
-    else pressed_z = 0;
+    else pressed_z = false;
     
     if (z64_game.common.input[0].pad_released.l)
         if (!pressed_r && !pressed_r && !pressed_z && timer_holding_l != 30 / fps_limit)
             toggle_options_menu();
     if (!z64_game.common.input[0].raw.pad.l)
-        pressed_r = pressed_z = 0;
+        pressed_r = pressed_z = false;
     
     if (z64_game.common.input[0].pad_pressed.l) {
         if (OPTION_VALUE(1, 2, SAVE_DPAD, CFG_DEFAULT_DPAD))
             if (!z64_game.common.input[0].raw.pad.r)
-                block_r = 1;
+                block_r = true;
         if (OPTION_ACTIVE(1, SAVE_30_FPS, CFG_DEFAULT_30_FPS))
             if (!z64_game.common.input[0].raw.pad.z)
-                block_z = 1;
+                block_z = true;
     }
     
     if (z64_game.common.input[0].raw.pad.l && timer_holding_l < 30 / fps_limit)
         timer_holding_l++;
     if (!z64_game.common.input[0].raw.pad.l)
-        block_r = block_z = timer_holding_l = 0;
+        block_r = block_z = timer_holding_l = false;
     
     if (block_r)
         z64_game.common.input[0].raw.pad.r = z64_game.common.input[0].pad_pressed.r = 0;
     if (block_z)
         z64_game.common.input[0].raw.pad.z = z64_game.common.input[0].pad_pressed.z = 0;
     
-    z64_game.common.input[0].pad_pressed.l = 0;
+    z64_game.common.input[0].pad_pressed.l = false;
 }
 
 void toggle_options_menu() {
     play_sfx = 0x4813;
-    if (z64_game.pause_ctxt.unk_02_[1] == 0)
-        z64_game.pause_ctxt.unk_02_[1] = 3;
+    if (z64_game.pause_ctxt.debugState == 0)
+        z64_game.pause_ctxt.debugState = 3;
     else {
-        z64_game.pause_ctxt.unk_02_[1] = 0;
+        z64_game.pause_ctxt.debugState = 0;
         play_sfx = 0x4814;
     }
 }
@@ -148,7 +147,7 @@ void toggle_minimap() {
     }
 }
 
-uint16_t get_scale_value(uint8_t scale) {
+u16 get_scale_value(u8 scale) {
     switch (scale) {
         case 31: return 525;
         case 30: return 550;
@@ -177,7 +176,7 @@ uint16_t get_scale_value(uint8_t scale) {
     }
 }
 
-void set_scale_values(uint8_t option, uint8_t button, int8_t icon_size, int8_t c_size) {
+void set_scale_values(u8 option, u8 button, s8 icon_size, s8 c_size) {
     switch (option) {
         case 1:
             z64_gameinfo.item_button_space[button] = 28 + c_size;
@@ -226,7 +225,7 @@ void handle_layout() {
                                                                     && OPTION_VALUE(1, 0, SAVE_C_DOWN_BUTTON_SCALE, CFG_DEFAULT_C_DOWN_BUTTON_SCALE) && OPTION_VALUE(1, 0, SAVE_C_RIGHT_BUTTON_SCALE, CFG_DEFAULT_C_RIGHT_BUTTON_SCALE))
         return;
     
-    if (z64_game.pause_ctxt.state == 6 && OPTION_ACTIVE(1, SAVE_HUD_LAYOUT > 0, CFG_DEFAULT_HUD_LAYOUT > 0)) {
+    if (z64_game.pause_ctxt.state == PAUSE_STATE_MAIN && OPTION_ACTIVE(1, SAVE_HUD_LAYOUT > 0, CFG_DEFAULT_HUD_LAYOUT > 0)) {
         if (OPTION_VALUE(1, 3, SAVE_HUD_LAYOUT, CFG_DEFAULT_HUD_LAYOUT)) { // Nintendo
             z64_c_left_x_set_item  = 0x343 + (0x208 * CFG_WS);
             z64_c_down_x_set_item  = 0x4FB + (0x208 * CFG_WS);
@@ -254,7 +253,7 @@ void handle_layout() {
     }
     
     if (CAN_DRAW_HUD && ( (!CFG_WS && z64_gameinfo.a_button_x == 186) || (CFG_WS && z64_gameinfo.a_button_x == 290) ) & z64_gameinfo.a_button_y == 9 && z64_gameinfo.item_button_y[0] == 0x11 && z64_gameinfo.item_button_y[1] == 0x12 && z64_gameinfo.item_button_y[2] == 0x22 && z64_gameinfo.item_button_y[3] == 0x12 && z64_gameinfo.c_up_button_y == 0x10) {
-        uint16_t a_x = 0, a_y = 0, b_x = 0, b_y = 0, c_left_x = 0, c_left_y = 0, c_down_x = 0, c_down_y = 0, c_right_x = 0, c_right_y = 0, c_up_x = 0, c_up_y = 0;
+        u16 a_x = 0, a_y = 0, b_x = 0, b_y = 0, c_left_x = 0, c_left_y = 0, c_down_x = 0, c_down_y = 0, c_right_x = 0, c_right_y = 0, c_up_x = 0, c_up_y = 0;
         
         if (OPTION_VALUE(1, 1, SAVE_HUD_LAYOUT, CFG_DEFAULT_HUD_LAYOUT)) { // Majora's Mask
             a_x       = 4;   // 186 -> 190
@@ -321,24 +320,24 @@ void handle_layout() {
         }
         
         if (OPTION_ACTIVE(1, SAVE_B_BUTTON_SCALE > 0, CFG_DEFAULT_B_BUTTON_SCALE > 0)) {
-            uint8_t val = CFG_OPTIONS_MENU >= 1 ? SAVE_B_BUTTON_SCALE : CFG_DEFAULT_B_BUTTON_SCALE * 0.5;
-            b_x += val;
-            b_y += val;
+            u8 val = CFG_OPTIONS_MENU >= 1 ? SAVE_B_BUTTON_SCALE : CFG_DEFAULT_B_BUTTON_SCALE * 0.5;
+            b_x   += val;
+            b_y   += val;
             z64_b_button_label_x -= val / 2;
             z64_b_button_label_y -= val / 1.3;
         }
         if (OPTION_ACTIVE(1, SAVE_C_LEFT_BUTTON_SCALE > 0, CFG_DEFAULT_C_LEFT_BUTTON_SCALE > 0)) {
-            uint8_t val = CFG_OPTIONS_MENU >= 1 ? SAVE_C_LEFT_BUTTON_SCALE : CFG_DEFAULT_C_LEFT_BUTTON_SCALE * 0.5;
+            u8 val    = CFG_OPTIONS_MENU >= 1 ? SAVE_C_LEFT_BUTTON_SCALE : CFG_DEFAULT_C_LEFT_BUTTON_SCALE * 0.5;
             c_left_x += val;
             c_left_y += val;
         }
         if (OPTION_ACTIVE(1, SAVE_C_DOWN_BUTTON_SCALE > 0, CFG_DEFAULT_C_DOWN_BUTTON_SCALE > 0)) {
-            uint8_t val = CFG_OPTIONS_MENU >= 1 ? SAVE_C_DOWN_BUTTON_SCALE : CFG_DEFAULT_C_DOWN_BUTTON_SCALE * 0.5;
+            u8 val    = CFG_OPTIONS_MENU >= 1 ? SAVE_C_DOWN_BUTTON_SCALE : CFG_DEFAULT_C_DOWN_BUTTON_SCALE * 0.5;
             c_down_x += val;
             c_down_y += val;
         }
         if (OPTION_ACTIVE(1, SAVE_C_RIGHT_BUTTON_SCALE > 0, CFG_DEFAULT_C_RIGHT_BUTTON_SCALE > 0)) {
-            uint8_t val = CFG_OPTIONS_MENU >= 1 ? SAVE_C_RIGHT_BUTTON_SCALE : CFG_DEFAULT_C_RIGHT_BUTTON_SCALE * 0.5;
+            u8 val     = CFG_OPTIONS_MENU >= 1 ? SAVE_C_RIGHT_BUTTON_SCALE : CFG_DEFAULT_C_RIGHT_BUTTON_SCALE * 0.5;
             c_right_x += val;
             c_right_y += val;
         }
@@ -363,31 +362,31 @@ void reset_layout() {
     z64_gameinfo.item_button_space[1] = z64_gameinfo.item_button_space[2] = z64_gameinfo.item_button_space[3] = 27;
     z64_gameinfo.item_icon_space[1]   = z64_gameinfo.item_icon_space[2]   = z64_gameinfo.item_icon_space[3]   = 24;
     
-    z64_gameinfo.a_button_y       = z64_gameinfo.a_button_icon_y = 0x9;
-    z64_gameinfo.item_button_y[0] = z64_gameinfo.item_icon_y[0]  = 0x11;
-    z64_gameinfo.item_ammo_y[0]   = z64_gameinfo.item_ammo_y[1]  = z64_gameinfo.item_ammo_y[3] = 0x23;
-    z64_b_button_label_y          = 0x16;
-    z64_gameinfo.item_button_y[1] = z64_gameinfo.item_icon_y[1]  = 0x12;
-    z64_gameinfo.item_button_y[2] = z64_gameinfo.item_icon_y[2]  = 0x22;
-    z64_gameinfo.item_ammo_y[2]   = 0x33;
-    z64_gameinfo.item_button_y[3] = z64_gameinfo.item_icon_y[3]  = 0x12;
-    z64_gameinfo.c_up_button_y    = 0x10;
-    z64_gameinfo.c_up_icon_y      = 0x14;
+    z64_gameinfo.a_button_y           = z64_gameinfo.a_button_icon_y = 0x9;
+    z64_gameinfo.item_button_y[0]     = z64_gameinfo.item_icon_y[0]  = 0x11;
+    z64_gameinfo.item_ammo_y[0]       = z64_gameinfo.item_ammo_y[1]  = z64_gameinfo.item_ammo_y[3] = 0x23;
+    z64_b_button_label_y              = 0x16;
+    z64_gameinfo.item_button_y[1]     = z64_gameinfo.item_icon_y[1]  = 0x12;
+    z64_gameinfo.item_button_y[2]     = z64_gameinfo.item_icon_y[2]  = 0x22;
+    z64_gameinfo.item_ammo_y[2]       = 0x33;
+    z64_gameinfo.item_button_y[3]     = z64_gameinfo.item_icon_y[3]  = 0x12;
+    z64_gameinfo.c_up_button_y        = 0x10;
+    z64_gameinfo.c_up_icon_y          = 0x14;
     
-    z64_gameinfo.a_button_x       = z64_gameinfo.a_button_icon_x = 0xBA + (0x68 * CFG_WS);
-    z64_gameinfo.item_button_x[0] = z64_gameinfo.item_icon_x[0]  = 0xA2 + (0x66 * CFG_WS);
-    z64_gameinfo.item_ammo_x[0]   = 0xA4  + (0x66 * CFG_WS);
-    z64_b_button_label_x          = 0x94  + (0x68 * CFG_WS);
-    z64_gameinfo.item_ammo_x[1]   = 0xE4  + (0x68 * CFG_WS);
-    z64_gameinfo.item_button_x[1] = z64_gameinfo.item_icon_x[1] = 0xE3 + (0x68 * CFG_WS);
-    z64_gameinfo.item_button_x[2] = z64_gameinfo.item_icon_x[2] = 0xF9 + (0x68 * CFG_WS);
-    z64_gameinfo.item_ammo_x[2]   = 0xFA  + (0x67 * CFG_WS);
-    z64_gameinfo.item_button_x[3] = z64_gameinfo.item_icon_x[3] = 0x10F + (0x68 * CFG_WS);
-    z64_gameinfo.item_ammo_x[3]   = 0x110 + (0x68 * CFG_WS);
-    z64_gameinfo.c_up_button_x    = 0xFE  + (0x68 * CFG_WS);
-    z64_gameinfo.c_up_icon_x      = 0xF7  + (0x68 * CFG_WS);
+    z64_gameinfo.a_button_x           = z64_gameinfo.a_button_icon_x = 0xBA + (0x68 * CFG_WS);
+    z64_gameinfo.item_button_x[0]     = z64_gameinfo.item_icon_x[0]  = 0xA2 + (0x66 * CFG_WS);
+    z64_gameinfo.item_ammo_x[0]       = 0xA4  + (0x66 * CFG_WS);
+    z64_b_button_label_x              = 0x94  + (0x68 * CFG_WS);
+    z64_gameinfo.item_ammo_x[1]       = 0xE4  + (0x68 * CFG_WS);
+    z64_gameinfo.item_button_x[1]     = z64_gameinfo.item_icon_x[1] = 0xE3 + (0x68 * CFG_WS);
+    z64_gameinfo.item_button_x[2]     = z64_gameinfo.item_icon_x[2] = 0xF9 + (0x68 * CFG_WS);
+    z64_gameinfo.item_ammo_x[2]       = 0xFA  + (0x67 * CFG_WS);
+    z64_gameinfo.item_button_x[3]     = z64_gameinfo.item_icon_x[3] = 0x10F + (0x68 * CFG_WS);
+    z64_gameinfo.item_ammo_x[3]       = 0x110 + (0x68 * CFG_WS);
+    z64_gameinfo.c_up_button_x        = 0xFE  + (0x68 * CFG_WS);
+    z64_gameinfo.c_up_icon_x          = 0xF7  + (0x68 * CFG_WS);
     
-    if (z64_game.pause_ctxt.state == 6 && OPTION_ACTIVE(1, SAVE_HUD_LAYOUT <= 1, CFG_DEFAULT_HUD_LAYOUT <= 1)) {
+    if (z64_game.pause_ctxt.state == PAUSE_STATE_MAIN && OPTION_ACTIVE(1, SAVE_HUD_LAYOUT <= 1, CFG_DEFAULT_HUD_LAYOUT <= 1)) {
         z64_c_left_x_set_item  = 0x294 + (0x208 * CFG_WS);
         z64_c_down_x_set_item  = 0x384 + (0x218 * CFG_WS);
         z64_c_right_x_set_item = 0x474 + (0x208 * CFG_WS);
@@ -395,37 +394,14 @@ void reset_layout() {
     }
 }
 
-void handle_hud() {
-    if (!CAN_DRAW_HUD || !CAN_CONTROL_LINK || z64_textbox != 0 || (z64_link.state_flags_1 & PLAYER_STATE1_NO_CONTROL) || (z64_link.state_flags_1 & PLAYER_STATE1_EXITING) )
-    return;
-    
-    if (OPTION_VALUE(1, 0, SAVE_HIDE_HUD, CFG_DEFAULT_HIDE_HUD))
-        set_hide_hud(50);
-    else if (OPTION_VALUE(1, 1, SAVE_HIDE_HUD, CFG_DEFAULT_HIDE_HUD))
-        set_hide_hud(6);
-    else if (OPTION_VALUE(1, 2, SAVE_HIDE_HUD, CFG_DEFAULT_HIDE_HUD))
-        set_hide_hud(9);
-    else if (OPTION_VALUE(1, 3, SAVE_HIDE_HUD, CFG_DEFAULT_HIDE_HUD))
-        set_hide_hud(11);
-    else if (OPTION_VALUE(1, 4, SAVE_HIDE_HUD, CFG_DEFAULT_HIDE_HUD))
-        set_hide_hud(1);
-}
-
-void set_hide_hud(uint8_t value) {
-    if (z64_file.prev_hud_visibility_mode == 1 || z64_file.prev_hud_visibility_mode == 6  || z64_file.prev_hud_visibility_mode == 9 || z64_file.prev_hud_visibility_mode == 11 || z64_file.prev_hud_visibility_mode == 50)
-        z64_file.prev_hud_visibility_mode = value;
-    if (z64_file.next_hud_visibility_mode == 1 || z64_file.next_hud_visibility_mode == 6  || z64_file.next_hud_visibility_mode == 9 || z64_file.next_hud_visibility_mode == 11 || z64_file.next_hud_visibility_mode == 50)
-        z64_file.next_hud_visibility_mode = value;
-}
-
 void set_b_button(pad_t pad_pressed) {
-    if (!OPTION_ACTIVE(2, SAVE_ITEM_ON_B, CFG_DEFAULT_ITEM_ON_B) || !z64_game.common.input[0].pad_pressed.a || z64_game.pause_ctxt.screen_idx != 0 || z64_game.pause_ctxt.unk_02_[1] != 0 || \
-        z64_game.pause_ctxt.cursor_pos == 0x0A || z64_game.pause_ctxt.cursor_pos == 0x0B || z64_game.pause_ctxt.item_cursor <= Z64_SLOT_STICK || z64_game.pause_ctxt.item_cursor >= Z64_SLOT_CHILD_TRADE)
+    if (!OPTION_ACTIVE(2, SAVE_ITEM_ON_B, CFG_DEFAULT_ITEM_ON_B) || !z64_game.common.input[0].pad_pressed.a || z64_game.pause_ctxt.pageIndex != SUBSCREEN_ITEM || z64_game.pause_ctxt.debugState != 0 || \
+        z64_game.pause_ctxt.cursorSpecialPos == 0x0A || z64_game.pause_ctxt.cursorSpecialPos == 0x0B || z64_game.pause_ctxt.cursorPoint[PAUSE_ITEM] <= Z64_SLOT_STICK || z64_game.pause_ctxt.cursorPoint[PAUSE_ITEM] >= Z64_SLOT_CHILD_TRADE)
         return;
     
     z64_item_t item = 0xFF;
-    for (uint8_t i=0; i<18; i++)
-        if (z64_game.pause_ctxt.item_cursor == i) {
+    for (u8 i=0; i<18; i++)
+        if (z64_game.pause_ctxt.cursorPoint[PAUSE_ITEM] == i) {
             if ( (!z64_file.link_age && z64_usability.item[i] == 1) || (z64_file.link_age && z64_usability.item[i] == 0) )
                 item = 0xFF;
             else item = z64_file.items[i];
@@ -438,6 +414,7 @@ void set_b_button(pad_t pad_pressed) {
         else if    (z64_file.link_age)
             z64_file.child_button_items[0] = item;
         z64_UpdateItemButton(&z64_game, 0);
+        z64_file.equip_sword = 0;
         play_sfx = 0x4808;
     }
 }
@@ -474,15 +451,15 @@ void handle_power_crouch_stab_fix() {
         return;
     
     if ( !(z64_link.state_flags_1 & PLAYER_STATE1_HOLDING_Z) && (z64_link.state_flags_1 & PLAYER_STATE1_SHIELDING) && (z64_link.state_flags_2 & PLAYER_STATE2_PULLING_ITEM) ) {
-        if (z64_link.item_action_param == PLAYER_AP_SWORD_KOKIRI || (z64_link.item_action_param == PLAYER_AP_SWORD_BGS && z64_file.broken_giants_knife) )
+        if (z64_link.held_item_action == PLAYER_IA_SWORD_KOKIRI || (z64_link.held_item_action == PLAYER_IA_SWORD_BIGGORON && z64_file.broken_giants_knife) )
             z64_damage_flag_1 = z64_damage_flag_2 = DMG_SLASH_KOKIRI;
-        else if (z64_link.item_action_param == PLAYER_AP_SWORD_MASTER)
+        else if (z64_link.held_item_action == PLAYER_IA_SWORD_MASTER)
             z64_damage_flag_1 = z64_damage_flag_2 = DMG_SLASH_MASTER;
-        else if (z64_link.item_action_param == PLAYER_AP_SWORD_BGS)
+        else if (z64_link.held_item_action == PLAYER_IA_SWORD_BIGGORON)
             z64_damage_flag_1 = z64_damage_flag_2 = DMG_SLASH_GIANT;
-        else if (z64_link.item_action_param == PLAYER_AP_STICK)
+        else if (z64_link.held_item_action == PLAYER_IA_DEKU_STICK)
             z64_damage_flag_1 = z64_damage_flag_2 = DMG_DEKU_STICK;
-        else if (z64_link.item_action_param == PLAYER_AP_HAMMER)
+        else if (z64_link.held_item_action == PLAYER_IA_HAMMER)
             z64_damage_flag_1 = z64_damage_flag_2 = DMG_HAMMER_SWING;
     }
 }
@@ -491,26 +468,26 @@ void handle_weaker_swords() {
     if (!(z64_link.state_flags_2 & PLAYER_STATE2_PULLING_ITEM))
         return;
     
-    uint8_t weaker   = OPTION_ACTIVE(2, SAVE_WEAKER_SWORDS, CFG_DEFAULT_WEAKER_SWORDS);
-    uint8_t stronger = OPTION_ACTIVE(2, SAVE_EXTRA_ABILITIES, CFG_DEFAULT_EXTRA_ABILITIES) && z64_file.water_medallion && z64_file.equip_tunic == 3;
-    uint8_t is_ganon = z64_game.scene_index == 0x4F;
+    bool weaker   = OPTION_ACTIVE(2, SAVE_WEAKER_SWORDS, CFG_DEFAULT_WEAKER_SWORDS);
+    bool stronger = OPTION_ACTIVE(2, SAVE_EXTRA_ABILITIES, CFG_DEFAULT_EXTRA_ABILITIES) && z64_file.water_medallion && z64_file.equip_tunic == 3;
+    bool is_ganon = z64_game.scene_index == 0x4F;
     
     if (stronger) {
-        if (z64_link.item_action_param == PLAYER_AP_SWORD_KOKIRI && z64_damage_flag_1 == DMG_SLASH_KOKIRI)
+        if (z64_link.held_item_action == PLAYER_IA_SWORD_KOKIRI && z64_damage_flag_1 == DMG_SLASH_KOKIRI)
             z64_damage_flag_1 = z64_damage_flag_2 = DMG_JUMP_KOKIRI;
-        else if (z64_link.item_action_param == PLAYER_AP_SWORD_MASTER && z64_damage_flag_1 == DMG_SLASH_MASTER)
+        else if (z64_link.held_item_action == PLAYER_IA_SWORD_MASTER && z64_damage_flag_1 == DMG_SLASH_MASTER)
             z64_damage_flag_1 = z64_damage_flag_2 = DMG_JUMP_MASTER;
-        else if (z64_link.item_action_param == PLAYER_AP_SWORD_BGS && z64_damage_flag_1 == DMG_SLASH_GIANT)
+        else if (z64_link.held_item_action == PLAYER_IA_SWORD_BIGGORON && z64_damage_flag_1 == DMG_SLASH_GIANT)
             z64_damage_flag_1 = z64_damage_flag_2 = DMG_JUMP_GIANT;
     }
     
     if (weaker) {
-        if (z64_link.item_action_param == PLAYER_AP_SWORD_KOKIRI || (z64_link.item_action_param == PLAYER_AP_SWORD_BGS && z64_file.broken_giants_knife) ) {
+        if (z64_link.held_item_action == PLAYER_IA_SWORD_KOKIRI || (z64_link.held_item_action == PLAYER_IA_SWORD_BIGGORON && z64_file.broken_giants_knife) ) {
             if (!stronger && z64_damage_flag_1 == DMG_JUMP_KOKIRI)
                 z64_damage_flag_1 = z64_damage_flag_2 = DMG_SLASH_KOKIRI;
         }
         
-        if (z64_link.item_action_param == PLAYER_AP_SWORD_MASTER) {
+        if (z64_link.held_item_action == PLAYER_IA_SWORD_MASTER) {
             if (!stronger && z64_damage_flag_1 == DMG_SLASH_MASTER && !is_ganon)
                 z64_damage_flag_1 = z64_damage_flag_2 = DMG_SLASH_KOKIRI;
             else if (z64_damage_flag_1 == DMG_JUMP_MASTER)
@@ -519,7 +496,7 @@ void handle_weaker_swords() {
                 z64_damage_flag_1 = z64_damage_flag_2 = DMG_SPIN_KOKIRI;
         }
         
-        else if (z64_link.item_action_param == PLAYER_AP_SWORD_BGS && !z64_file.broken_giants_knife) {
+        else if (z64_link.held_item_action == PLAYER_IA_SWORD_BIGGORON && !z64_file.broken_giants_knife) {
             if (!stronger && z64_damage_flag_1 == DMG_SLASH_GIANT && !is_ganon)
                 z64_damage_flag_1 = z64_damage_flag_2 = DMG_SLASH_MASTER;
             else if (z64_damage_flag_1 == DMG_JUMP_GIANT && !is_ganon)
@@ -528,14 +505,14 @@ void handle_weaker_swords() {
                 z64_damage_flag_1 = z64_damage_flag_2 = DMG_SPIN_MASTER;
         }
         
-        else if (z64_link.item_action_param == PLAYER_AP_STICK) {
+        else if (z64_link.held_item_action == PLAYER_IA_DEKU_STICK) {
             if (z64_damage_flag_1 == DMG_DEKU_STICK)
                 z64_damage_flag_1 = z64_damage_flag_2 = DMG_SLASH_KOKIRI;
             else if (z64_damage_flag_1 == DMG_JUMP_MASTER)
                 z64_damage_flag_1 = z64_damage_flag_2 = DMG_JUMP_KOKIRI;
         }
     
-        else if (z64_link.item_action_param == PLAYER_AP_HAMMER && z64_game.scene_index != 0x15) {
+        else if (z64_link.held_item_action == PLAYER_IA_HAMMER && z64_game.scene_index != 0x15) {
             if (z64_damage_flag_1 == DMG_HAMMER_SWING)
                 z64_damage_flag_1 = z64_damage_flag_2 = DMG_SLASH_KOKIRI;
             else if (z64_damage_flag_1 == DMG_HAMMER_JUMP)
@@ -679,7 +656,7 @@ void handle_abilities() {
                 
             if (magic_secs >= 1) {
                 magic_secs = 0;
-                uint8_t drain = 2 - z64_file.zoras_sapphire;
+                u8 drain        = 2 - z64_file.zoras_sapphire;
                 z64_file.magic -= z64_file.magic >= drain ? drain : 0;
             }
                 
@@ -690,7 +667,7 @@ void handle_abilities() {
 }
 
 void handle_infinite() {
-    if (z64_game.pause_ctxt.unk_02_[1] != 0)
+    if (z64_game.pause_ctxt.debugState != 0)
         return;
     
     if (OPTION_ACTIVE(3, SAVE_INFINITE_HP, CFG_DEFAULT_INFINITE_HP))
@@ -715,4 +692,240 @@ void handle_infinite() {
     
     if (OPTION_ACTIVE(3, SAVE_INFINITE_RUPEES, CFG_DEFAULT_INFINITE_RUPEES))
         z64_file.rupees = z64_capacity.wallet[z64_file.wallet];
+}
+
+void interface_raise_button_alphas(z64_game_t* game, u8 rising_alpha) {
+    for (u8 i=0; i<5; i++) {
+        if (z64_file.button_status[i] == BTN_DISABLED) {
+            if (*button_alphas[i] != 70)
+                *button_alphas[i] = 70;
+        }
+        else if (*button_alphas[i] != 255)
+            *button_alphas[i] = rising_alpha;
+    }
+    
+    if ((z64_link.state_flags_1 & PLAYER_STATE1_CLIMBING) || (z64_link.state_flags_2 & PLAYER_STATE2_CRAWLING)) {
+        if (dpad_alpha != 70)
+            dpad_alpha = 70;
+    }
+    else if (dpad_alpha != 255)
+        dpad_alpha = rising_alpha;
+}
+
+void interface_dim_button_alphas(z64_game_t* game, u8 dimming_alpha, u8 rising_alpha) {
+    if (z64_file.force_rising_button_alphas) {
+        interface_raise_button_alphas(game, rising_alpha);
+        return;
+    }
+    
+    for (u8 i=0; i<4; i++)
+        if (*button_alphas[i] != 0 && *button_alphas[i] > dimming_alpha)
+            *button_alphas[i] = dimming_alpha;
+        
+    if (dpad_alpha != 0 && dpad_alpha > dimming_alpha)
+            dpad_alpha = dimming_alpha;
+}
+
+void interface_update_hud_alphas(z64_game_t* game, u8 dimming_alpha) {
+    u8 rising_alpha = 255 - dimming_alpha;
+    
+    switch (z64_file.next_hud_visibility_mode) {
+        case HUD_VISIBILITY_NOTHING:
+        case HUD_VISIBILITY_NOTHING_ALT:
+        case HUD_VISIBILITY_B: {
+            if (z64_file.next_hud_visibility_mode == HUD_VISIBILITY_B) {
+                if (game->alpha_channels.b_button != 255)
+                    game->alpha_channels.b_button = rising_alpha;
+            }
+            else if (game->alpha_channels.b_button != 0 && game->alpha_channels.b_button > dimming_alpha)
+                game->alpha_channels.b_button = dimming_alpha;
+            
+            static u16* dimming_alphas[] = { &z64_game.alpha_channels.a_button, &z64_game.alpha_channels.cl_button, &z64_game.alpha_channels.cd_button, &z64_game.alpha_channels.cr_button, &z64_game.alpha_channels.health, &z64_game.alpha_channels.magic, &z64_game.alpha_channels.minimap, &dpad_alpha };
+            for (u8 i=0; i<ARRAY_SIZE(dimming_alphas); i++)
+                if (*dimming_alphas[i] != 0 && *dimming_alphas[i] > dimming_alpha)
+                    *dimming_alphas[i] = dimming_alpha;
+            break;
+        }
+
+        case HUD_VISIBILITY_HEARTS_FORCE: {
+            if (game->alpha_channels.a_button != 0 && game->alpha_channels.a_button > dimming_alpha)
+                game->alpha_channels.a_button  = dimming_alpha;
+            
+            interface_dim_button_alphas(game, dimming_alpha, rising_alpha);
+            
+            static u16* dimming_alphas[] = { &z64_game.alpha_channels.magic, &z64_game.alpha_channels.minimap };
+            for (u8 i=0; i<ARRAY_SIZE(dimming_alphas); i++)
+                if (*dimming_alphas[i] != 0 && *dimming_alphas[i] > dimming_alpha)
+                    *dimming_alphas[i] = dimming_alpha;
+            
+            if (game->alpha_channels.health   != 255)
+                game->alpha_channels.health    = rising_alpha;
+            break;
+        }
+
+        case HUD_VISIBILITY_A: {
+            static u16* dimming_alphas[] = { &z64_game.alpha_channels.b_button, &z64_game.alpha_channels.a_button, &z64_game.alpha_channels.cl_button, &z64_game.alpha_channels.cd_button, &z64_game.alpha_channels.cr_button, &z64_game.alpha_channels.health, &z64_game.alpha_channels.magic, &z64_game.alpha_channels.minimap, &dpad_alpha };
+            for (u8 i=0; i<ARRAY_SIZE(dimming_alphas); i++)
+                if (*dimming_alphas[i] != 0 && *dimming_alphas[i] > dimming_alpha)
+                    *dimming_alphas[i] = dimming_alpha;
+                
+            if (game->alpha_channels.a_button != 255)
+                game->alpha_channels.a_button = rising_alpha;
+            break;
+        }
+
+        case HUD_VISIBILITY_A_HEARTS_MAGIC_FORCE: {
+            interface_dim_button_alphas(game, dimming_alpha, rising_alpha);
+            
+            if (game->alpha_channels.minimap  != 0 && game->alpha_channels.minimap > dimming_alpha)
+                game->alpha_channels.minimap   = dimming_alpha;
+            
+            static u16* rising_alphas[] = { &z64_game.alpha_channels.a_button, &z64_game.alpha_channels.health, &z64_game.alpha_channels.magic };
+            for (u8 i=0; i<ARRAY_SIZE(rising_alphas); i++)
+                if (*rising_alphas[i] != 255)
+                *rising_alphas[i] = rising_alpha;
+            break;
+        }
+
+        case HUD_VISIBILITY_A_HEARTS_MAGIC_MINIMAP_FORCE: {
+            interface_dim_button_alphas(game, dimming_alpha, rising_alpha);
+            
+            static u16* rising_alphas[] = { &z64_game.alpha_channels.a_button, &z64_game.alpha_channels.health, &z64_game.alpha_channels.magic };
+            for (u8 i=0; i<ARRAY_SIZE(rising_alphas); i++)
+                if (*rising_alphas[i] != 255)
+                    *rising_alphas[i] = rising_alpha;
+
+            switch (game->scene_index) {
+                case SCENE_HYRULE_FIELD:
+                case SCENE_KAKARIKO_VILLAGE:
+                case SCENE_GRAVEYARD:
+                case SCENE_ZORAS_RIVER:
+                case SCENE_KOKIRI_FOREST:
+                case SCENE_SACRED_FOREST_MEADOW:
+                case SCENE_LAKE_HYLIA:
+                case SCENE_ZORAS_DOMAIN:
+                case SCENE_ZORAS_FOUNTAIN:
+                case SCENE_GERUDO_VALLEY:
+                case SCENE_LOST_WOODS:
+                case SCENE_DESERT_COLOSSUS:
+                case SCENE_GERUDOS_FORTRESS:
+                case SCENE_HAUNTED_WASTELAND:
+                case SCENE_HYRULE_CASTLE:
+                case SCENE_DEATH_MOUNTAIN_TRAIL:
+                case SCENE_DEATH_MOUNTAIN_CRATER:
+                case SCENE_GORON_CITY:
+                case SCENE_LON_LON_RANCH:
+                case SCENE_OUTSIDE_GANONS_CASTLE:
+                    game->alpha_channels.minimap = (game->alpha_channels.minimap < 170) ? rising_alpha : 170;
+                    break;
+                default:
+                    if (game->alpha_channels.minimap != 255)
+                        game->alpha_channels.minimap  = rising_alpha;
+                    break;
+            }
+            break;
+        }
+
+        case HUD_VISIBILITY_ALL_NO_MINIMAP_BY_BTN_STATUS:
+            if (game->alpha_channels.minimap != 0 && game->alpha_channels.minimap > dimming_alpha)
+                game->alpha_channels.minimap  = dimming_alpha;
+            
+            interface_raise_button_alphas(game, rising_alpha);
+            
+            static u16* rising_alphas[] = { &z64_game.alpha_channels.health, &z64_game.alpha_channels.magic };
+            for (u8 i=0; i<ARRAY_SIZE(rising_alphas); i++)
+                if (*rising_alphas[i] != 255)
+                    *rising_alphas[i] = rising_alpha;
+            break;
+
+        case HUD_VISIBILITY_HEARTS_MAGIC: {
+            static u16* dimming_alphas[] = { &z64_game.alpha_channels.b_button, &z64_game.alpha_channels.a_button, &z64_game.alpha_channels.cl_button, &z64_game.alpha_channels.cd_button, &z64_game.alpha_channels.cr_button, &z64_game.alpha_channels.minimap, &dpad_alpha };
+            for (u8 i=0; i<ARRAY_SIZE(dimming_alphas); i++)
+                if (*dimming_alphas[i] != 0 && *dimming_alphas[i] > dimming_alpha)
+                    *dimming_alphas[i] = dimming_alpha;
+            
+            static u16* rising_alphas[] = { &z64_game.alpha_channels.health, &z64_game.alpha_channels.magic };
+            for (u8 i=0; i<ARRAY_SIZE(rising_alphas); i++)
+                if (*rising_alphas[i] != 255)
+                    *rising_alphas[i] = rising_alpha;
+            break;
+        }
+
+        case HUD_VISIBILITY_B_ALT: {
+            static u16* dimming_alphas[] = { &z64_game.alpha_channels.a_button, &z64_game.alpha_channels.cl_button, &z64_game.alpha_channels.cd_button, &z64_game.alpha_channels.cr_button, &z64_game.alpha_channels.health, &z64_game.alpha_channels.magic, &z64_game.alpha_channels.minimap, &dpad_alpha };
+            for (u8 i=0; i<ARRAY_SIZE(dimming_alphas); i++)
+                if (*dimming_alphas[i] != 0 && *dimming_alphas[i] > dimming_alpha)
+                    *dimming_alphas[i] = dimming_alpha;
+            
+            if (game->alpha_channels.b_button != 255)
+                game->alpha_channels.b_button = rising_alpha;
+            break;
+        }
+
+        case HUD_VISIBILITY_HEARTS: {
+            static u16* dimming_alphas[] = { &z64_game.alpha_channels.b_button, &z64_game.alpha_channels.a_button, &z64_game.alpha_channels.cl_button, &z64_game.alpha_channels.cd_button, &z64_game.alpha_channels.cr_button, &z64_game.alpha_channels.minimap, &z64_game.alpha_channels.magic, &dpad_alpha };
+            for (u8 i=0; i<ARRAY_SIZE(dimming_alphas); i++)
+                if (*dimming_alphas[i] != 0 && *dimming_alphas[i] > dimming_alpha)
+                    *dimming_alphas[i] = dimming_alpha;
+            
+            if (game->alpha_channels.health != 255)
+                game->alpha_channels.health = rising_alpha;
+            break;
+        }
+
+        case HUD_VISIBILITY_A_B_MINIMAP: {
+            static u16* rising_alphas[] = { &z64_game.alpha_channels.a_button, &z64_game.alpha_channels.b_button, &z64_game.alpha_channels.minimap };
+            for (u8 i=0; i<ARRAY_SIZE(rising_alphas); i++)
+                if (*rising_alphas[i] != 255)
+                    *rising_alphas[i] = rising_alpha;
+            
+            static u16* dimming_alphas[] = { &z64_game.alpha_channels.cl_button, &z64_game.alpha_channels.cd_button, &z64_game.alpha_channels.cr_button, &z64_game.alpha_channels.magic, &z64_game.alpha_channels.health, &dpad_alpha };
+            for (u8 i=0; i<ARRAY_SIZE(dimming_alphas); i++)
+                if (*dimming_alphas[i] != 0 && *dimming_alphas[i] > dimming_alpha)
+                    *dimming_alphas[i] = dimming_alpha;
+            break;
+        }
+
+        case HUD_VISIBILITY_HEARTS_MAGIC_FORCE: {
+            interface_dim_button_alphas(game, dimming_alpha, rising_alpha);
+            
+            static u16* dimming_alphas[] = { &z64_game.alpha_channels.minimap, &z64_game.alpha_channels.a_button };
+            for (u8 i=0; i<ARRAY_SIZE(dimming_alphas); i++)
+                if (*dimming_alphas[i] != 0 && *dimming_alphas[i] > dimming_alpha)
+                    *dimming_alphas[i] = dimming_alpha;
+                
+            static u16* rising_alphas[] = { &z64_game.alpha_channels.health, &z64_game.alpha_channels.magic };
+            for (u8 i=0; i<ARRAY_SIZE(rising_alphas); i++)
+                if (*rising_alphas[i] != 255)
+                    *rising_alphas[i] = rising_alpha;
+            break;
+        }
+    }
+    
+    if ((game->room_behavior_type_1 == ROOM_BEHAVIOR_TYPE1_1) && (game->alpha_channels.minimap >= 255))
+        game->alpha_channels.minimap = 255;
+}
+
+void interface_change_hud_visibility_mode(u16 hud_visibility_mode) {
+    if (hud_visibility_mode != z64_file.hud_visibility_mode) {
+        u8 mode = hud_visibility_mode;
+        
+        if (!z64_game.pause_ctxt.state) {
+            if (OPTION_VALUE(1, 0, SAVE_HIDE_HUD, CFG_DEFAULT_HIDE_HUD) && last_interface >= 0) {
+                mode           = HUD_VISIBILITY_ALL;
+                last_interface = -1;
+            }
+            else if (OPTION_VALUE(1, 1, SAVE_HIDE_HUD, CFG_DEFAULT_HIDE_HUD) && last_interface != HUD_VISIBILITY_NOTHING)
+                mode = last_interface = HUD_VISIBILITY_A_HEARTS_MAGIC_MINIMAP_FORCE;
+            else if (OPTION_VALUE(1, 2, SAVE_HIDE_HUD, CFG_DEFAULT_HIDE_HUD) && last_interface != HUD_VISIBILITY_NOTHING)
+                mode = last_interface = HUD_VISIBILITY_HEARTS_MAGIC;
+            else if (OPTION_VALUE(1, 3, SAVE_HIDE_HUD, CFG_DEFAULT_HIDE_HUD) && last_interface != HUD_VISIBILITY_NOTHING)
+                mode = last_interface = HUD_VISIBILITY_HEARTS;
+            else if (OPTION_VALUE(1, 4, SAVE_HIDE_HUD, CFG_DEFAULT_HIDE_HUD))
+                mode = last_interface = HUD_VISIBILITY_NOTHING;
+        }
+        
+        z64_file.hud_visibility_mode = z64_file.next_hud_visibility_mode = mode;
+        z64_file.hud_visibility_mode_timer = 1;
+    }
 }
