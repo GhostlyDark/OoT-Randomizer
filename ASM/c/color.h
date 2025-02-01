@@ -1,27 +1,22 @@
 #ifndef COLOR_H
 #define COLOR_H
 
-typedef struct
-{
+typedef struct {
     uint16_t r;
     uint16_t g;
     uint16_t b;
 } colorRGB16_t;
 
 
-typedef struct
-{
+typedef struct {
     uint8_t r;
     uint8_t g;
     uint8_t b;
 } colorRGB8_t;
 
-typedef struct
-{
-    union
-    {
-        struct
-        {
+typedef struct {
+    union {
+        struct {
             uint8_t r;
             uint8_t g;
             uint8_t b;
@@ -31,12 +26,9 @@ typedef struct
     uint8_t a;
 } colorRGBA8_t;
 
-typedef struct
-{
-    union
-    {
-        struct
-        {
+typedef struct {
+    union {
+        struct {
             uint16_t r;
             uint16_t g;
             uint16_t b;
@@ -46,8 +38,7 @@ typedef struct
     uint16_t a;
 } colorRGBA16_t;
 
-typedef struct
-{
+typedef struct {
     uint16_t r1;
     uint16_t r2;
     uint16_t g1;
@@ -56,8 +47,7 @@ typedef struct
     uint16_t b2;
 } colorRGB16_2_t;
 
-typedef struct
-{
+typedef struct {
     float r;
     float g;
     float b;

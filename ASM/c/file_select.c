@@ -1,26 +1,26 @@
 #include "file_select.h"
 
 #include "file_icons.h"
-#include "file_message.h"
+//#include "file_message.h"
 #include "gfx.h"
-#include "text.h"
-#include "util.h"
-#include "z64.h"
+//#include "text.h"
+//#include "util.h"
+//#include "z64.h"
 
 
 extern uint8_t CFG_WS;
 
-sprite_t *hash_sprites[2] = {
+/*sprite_t *hash_sprites[2] = {
     &items_sprite,
     &quest_items_sprite,
-};
+};*/
 
-typedef struct {
+/*typedef struct {
     uint8_t sprite_index;
     uint8_t tile_index;
-} hash_symbol_t;
+} hash_symbol_t;*/
 
-hash_symbol_t hash_symbols[32] = {
+/*hash_symbol_t hash_symbols[32] = {
     { 0,  0 }, // Deku Stick
     { 0,  1 }, // Deku Nut
     { 0,  3 }, // Bow
@@ -53,10 +53,10 @@ hash_symbol_t hash_symbols[32] = {
     { 1, 15 }, // Compass
     { 1, 16 }, // Map
     { 1, 19 }, // Big Magic
-};
+};*/
 
 
-uint32_t cfg_file_select_hash = 0;
+//uint32_t cfg_file_select_hash = 0;
 
 void draw_file_select_hash(uint32_t fade_out_alpha, z64_menudata_t* menu_data) {
     z64_disp_buf_t *db = &(z64_ctxt.gfx->poly_opa);
@@ -98,8 +98,6 @@ void draw_file_select_hash(uint32_t fade_out_alpha, z64_menudata_t* menu_data) {
     gDPSetCombineMode(db->p++, G_CC_PRIMITIVE, G_CC_PRIMITIVE);
     gDPSetPrimColor(db->p++, 0, 0, 0x00, 0x00, 0x00, fade_out_alpha);
 	
-	uint8_t width = 0;
-	if (CFG_WS)
-		width = 104;
+	uint8_t width = CFG_WS ? 104 : 0;
 	gSPTextureRectangle(db->p++, 0, 0, Z64_SCREEN_WIDTH+width<<2, Z64_SCREEN_HEIGHT<<2, 0, 0, 0, 1<<10, 1<<10);
 }

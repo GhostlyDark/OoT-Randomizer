@@ -2,7 +2,7 @@
 
 #include "color.h"
 #include "hud_colors.h"
-#include "triforce.h"
+//#include "triforce.h"
 
 #define ICON_SIZE    0x0C
 #define MUSIC_WIDTH  0x06
@@ -51,8 +51,7 @@ static uint8_t color_product(uint8_t c1, uint8_t c2) {
 }
 
 static void draw_square_sprite(z64_disp_buf_t* db, sprite_t* sprite, int tile_index, tile_position pos, int size) {
-    sprite_load(db, sprite, tile_index, 1);
-    sprite_draw(db, sprite, 0, get_left(pos), get_top(pos), size, size);
+    sprite_load_and_draw(db, sprite, tile_index, get_left(pos), get_top(pos), size, size);
 }
 
 
@@ -535,8 +534,7 @@ static void draw_counts(z64_disp_buf_t* db, const counter_tile_info_t* info, uin
     }
 
     // Skulltula
-    sprite_load(db, &quest_items_sprite, 11, 1);
-    sprite_draw(db, &quest_items_sprite, 0, get_left(data[SLOT_SKULLTULLAS].pos), get_top(data[SLOT_SKULLTULLAS].pos), COUNTER_ICON_SIZE, COUNTER_ICON_SIZE);
+    sprite_load_and_draw(db, &quest_items_sprite, 11, get_left(data[SLOT_SKULLTULLAS].pos), get_top(data[SLOT_SKULLTULLAS].pos), COUNTER_ICON_SIZE, COUNTER_ICON_SIZE);
 
     // Triforce
     if (info->digits[SLOT_TRIFORCE][2] <= 9) {

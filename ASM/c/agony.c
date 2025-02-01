@@ -59,7 +59,7 @@ void agony_vibrate_setup() {
 
 void draw_agony_graphic(int hoffset, int voffset, unsigned char alpha) {
     // terminate if alpha level prohibited (changed areas)
-    unsigned char maxalpha = (unsigned char)z64_game.hud_alpha_channels.minimap;
+    unsigned char maxalpha = (unsigned char)z64_game.alpha_channels.minimap;
     if (maxalpha == 0xAA) maxalpha = 0xFF;
 
     if (alpha > maxalpha) {
@@ -71,8 +71,7 @@ void draw_agony_graphic(int hoffset, int voffset, unsigned char alpha) {
     gDPPipeSync(db->p++);
     gDPSetCombineMode(db->p++, G_CC_MODULATEIA_PRIM, G_CC_MODULATEIA_PRIM);
     gDPSetPrimColor(db->p++, 0, 0, 0xFF, 0xFF, 0xFF, alpha);
-    sprite_load(db, &quest_items_sprite, 9, 1);
-    sprite_draw(db, &quest_items_sprite, 0, 27+hoffset, 189+voffset, 16, 16);
+    sprite_load_and_draw(db, &quest_items_sprite, 9, 27 + hoffset, 189 + voffset, 16, 16);
     gDPPipeSync(db->p++);
 }
 
